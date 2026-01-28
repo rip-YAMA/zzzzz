@@ -1,0 +1,125 @@
+-- Load UI Library dulu
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/UI-Librarys/main/whatever"))()
+
+-- Bikin window
+local Window = Library:CreateWindow("Tsunami Escape", "God Mode Tools")
+
+-- Tab untuk God Mode
+local MainTab = Window:CreateTab("Main")
+local GodSection = MainTab:CreateSection("God Mode Settings")
+
+-- Toggle God Mode
+local godToggle = false
+local originalHealth = nil
+
+GodSection:CreateToggle(
+    "Enable God Mode",
+    function(state)
+        godToggle = state
+        local Character = game.Players.LocalPlayer.Character
+        if Character then
+            local Humanoid = Character:FindFirstChild("Humanoid")
+            if Humanoid then
+                if state then
+                    originalHealth = Humanoid.MaxHealth
+                    Humanoid.MaxHealth = math.huge
+                    Humanoid.Health = math.huge
+                    
+                    -- Auto heal system
+                    Humanoid.HealthChanged:Connect(function()
+                        if godToggle then
+                            Humanoid.Health = math.huge
+                        end
+                    end)
+                    
+                    -- Disable damage parts
+                    for _, part in ipairs(Character:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanTouch = false
+                        end
+                    end
+                    
+                    Library:Notify("God Mode Enabled", "You are now immortal")
+                else
+                    if originalHealth then
+                        Humanoid.MaxHealth = originalHealth
+                        Humanoid.Health = originalHealth
+                    end
+                    
+                    -- Re-enable collisions
+                    for _, part in ipairs(Character:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanTouch = true
+                        end
+                    end
+                    
+                    Library:Notify("God Mode Disabled", "You can now take damage")
+                end
+            end
+        end
+    end
+)
+
+-- Auto-respawn if character dies (backup system)
+GodSection:CreateToggle(
+    "Auto Respawn",
+    function(state)
+        if state then
+            game.Players.LocalPlayer.CharacterAdded:Connect(function()
+                wait(1)
+                if godToggle then
+                    local Humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+                    if Humanoid then
+                        Humanoid.MaxHealth = math.huge
+                        Humanoid.Health = math.huge
+                    end
+                end
+            end)
+        end
+    end
+)
+
+-- Status indicator
+local statusLabel = GodSection:CreateLabel("God Mode: OFF")
+
+-- Update status label
+spawn(function()
+    while true do
+        wait(0.5)
+        if statusLabel then
+            statusLabel:SetLabel("God Mode: " .. (godToggle and "ON" or "OFF"))
+        end
+    end
+end)
+
+-- Info section
+local InfoTab = Window:CreateTab("Info")
+local InfoSection = InfoTab:CreateSection("Instructions")
+
+InfoSection:CreateLabel("1. Toggle God Mode untuk aktif/tidak")
+InfoSection:CreateLabel("2. Auto Respawn untuk backup system")
+InfoSection:CreateLabel("3. Hanya bekerja di game exploit-friendly")
+InfoSection:CreateLabel("4. Server-side anti-cheat mungkin bypass")
+
+-- Keybind untuk toggle cepat
+local UserInputService = game:GetService("UserInputService")
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.KeyCode == Enum.KeyCode.G then
+            godToggle = not godToggle
+            -- Trigger toggle function here
+            Library:Notify("God Mode", godToggle and "Enabled" or "Disabled")
+        end
+    end
+end)
+
+-- Init character jika sudah ada
+if game.Players.LocalPlayer.Character then
+    if godToggle then
+        local Humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+        if Humanoid then
+            Humanoid.MaxHealth = math.huge
+            Humanoid.Health = math.huge
+        end
+    end
+end
